@@ -1,11 +1,12 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "languageVersion": "2.0",
   "contentVersion": "1.0.0.0",
   "metadata": {
     "_generator": {
       "name": "bicep",
       "version": "0.39.26.7824",
-      "templateHash": "4582387369243158670"
+      "templateHash": "6024754393411910608"
     }
   },
   "parameters": {
@@ -94,7 +95,9 @@
     }
   },
   "variables": {
-    "resourceNameBase": "[format('tailspin{0}', take(uniqueString(resourceGroup().id), 7))]",
+    "prefix": "tailspin",
+    "suffix": "[take(uniqueString(resourceGroup().id), 6)]",
+    "resourceNameBase": "[format('{0}{1}', variables('prefix'), variables('suffix'))]",
     "location": "[resourceGroup().location]",
     "hubNamePrefix": "[format('{0}-hub', variables('resourceNameBase'))]",
     "spokeNamePrefix": "[format('{0}-spoke', variables('resourceNameBase'))]",
@@ -107,8 +110,6 @@
     "gitHubRepo": "[format('{0}/{1}', parameters('repositoryOwner'), parameters('repositoryName'))]",
     "gitHubRepoScriptPath": "Hands-on%20lab/resources/deployment/onprem",
     "gitHubRepoUrl": "[format('https://github.com/{0}/raw/refs/heads/{1}/{2}', variables('gitHubRepo'), parameters('repositoryBranch'), variables('gitHubRepoScriptPath'))]",
-    "arcOnboardingScriptName": "RegisterSqlServerArc.ps1",
-    "arcOnboardingScriptUrl": "[format('{0}/{1}', variables('gitHubRepoUrl'), variables('arcOnboardingScriptName'))]",
     "databaseBackupFile": "database.bak",
     "databaseBackupFileUrl": "[format('{0}/{1}', variables('gitHubRepoUrl'), variables('databaseBackupFile'))]",
     "sqlVmScriptName": "sql-vm-config.ps1",
@@ -125,8 +126,8 @@
       "createdBy": "[parameters('azureAdUserLogin')]"
     }
   },
-  "resources": [
-    {
+  "resources": {
+    "onprem_vnet": {
       "type": "Microsoft.Network/virtualNetworks",
       "apiVersion": "2025-01-01",
       "name": "[format('{0}-vnet', variables('onPremPrefix'))]",
@@ -140,7 +141,7 @@
         }
       }
     },
-    {
+    "onprem_subnet": {
       "type": "Microsoft.Network/virtualNetworks/subnets",
       "apiVersion": "2025-01-01",
       "name": "[format('{0}/{1}', format('{0}-vnet', variables('onPremPrefix')), 'default')]",
@@ -148,10 +149,10 @@
         "addressPrefix": "10.0.0.0/24"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', format('{0}-vnet', variables('onPremPrefix')))]"
+        "onprem_vnet"
       ]
     },
-    {
+    "hub_vnet": {
       "type": "Microsoft.Network/virtualNetworks",
       "apiVersion": "2025-01-01",
       "name": "[format('{0}-vnet', variables('hubNamePrefix'))]",
@@ -179,7 +180,7 @@
         ]
       }
     },
-    {
+    "spoke_vnet": {
       "type": "Microsoft.Network/virtualNetworks",
       "apiVersion": "2025-01-01",
       "name": "[format('{0}-vnet', variables('spokeNamePrefix'))]",
@@ -222,11 +223,11 @@
         ]
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkSecurityGroups', format('{0}-nsg', variables('sqlMiPrefix')))]",
-        "[resourceId('Microsoft.Network/routeTables', format('{0}-rt', variables('sqlMiPrefix')))]"
+        "sqlMi_subnet_nsg",
+        "sqlMi_subnet_routetable"
       ]
     },
-    {
+    "hub_onprem_vnet_peering": {
       "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
       "apiVersion": "2025-01-01",
       "name": "[format('{0}/{1}', format('{0}-vnet', variables('hubNamePrefix')), 'hub-onprem')]",
@@ -238,11 +239,11 @@
         "allowForwardedTraffic": true
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', format('{0}-vnet', variables('hubNamePrefix')))]",
-        "[resourceId('Microsoft.Network/virtualNetworks', format('{0}-vnet', variables('onPremPrefix')))]"
+        "hub_vnet",
+        "onprem_vnet"
       ]
     },
-    {
+    "onprem_hub_vnet_peering": {
       "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
       "apiVersion": "2025-01-01",
       "name": "[format('{0}/{1}', format('{0}-vnet', variables('onPremPrefix')), 'onprem-hub')]",
@@ -254,11 +255,11 @@
         "allowForwardedTraffic": true
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', format('{0}-vnet', variables('hubNamePrefix')))]",
-        "[resourceId('Microsoft.Network/virtualNetworks', format('{0}-vnet', variables('onPremPrefix')))]"
+        "hub_vnet",
+        "onprem_vnet"
       ]
     },
-    {
+    "hub_spoke_vnet_peering": {
       "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
       "apiVersion": "2025-01-01",
       "name": "[format('{0}/{1}', format('{0}-vnet', variables('hubNamePrefix')), 'hub-spoke')]",
@@ -270,11 +271,11 @@
         "allowForwardedTraffic": true
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', format('{0}-vnet', variables('hubNamePrefix')))]",
-        "[resourceId('Microsoft.Network/virtualNetworks', format('{0}-vnet', variables('spokeNamePrefix')))]"
+        "hub_vnet",
+        "spoke_vnet"
       ]
     },
-    {
+    "spoke_hub_vnet_peering": {
       "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
       "apiVersion": "2025-01-01",
       "name": "[format('{0}/{1}', format('{0}-vnet', variables('spokeNamePrefix')), 'spoke-hub')]",
@@ -286,11 +287,11 @@
         "allowForwardedTraffic": true
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', format('{0}-vnet', variables('hubNamePrefix')))]",
-        "[resourceId('Microsoft.Network/virtualNetworks', format('{0}-vnet', variables('spokeNamePrefix')))]"
+        "hub_vnet",
+        "spoke_vnet"
       ]
     },
-    {
+    "spoke_onprem_vnet_peering": {
       "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
       "apiVersion": "2025-01-01",
       "name": "[format('{0}/{1}', format('{0}-vnet', variables('spokeNamePrefix')), 'spoke-onprem')]",
@@ -302,11 +303,11 @@
         "allowForwardedTraffic": true
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', format('{0}-vnet', variables('onPremPrefix')))]",
-        "[resourceId('Microsoft.Network/virtualNetworks', format('{0}-vnet', variables('spokeNamePrefix')))]"
+        "onprem_vnet",
+        "spoke_vnet"
       ]
     },
-    {
+    "onprem_spoke_vnet_peering": {
       "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
       "apiVersion": "2025-01-01",
       "name": "[format('{0}/{1}', format('{0}-vnet', variables('onPremPrefix')), 'onprem-spoke')]",
@@ -318,11 +319,11 @@
         "allowForwardedTraffic": true
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', format('{0}-vnet', variables('onPremPrefix')))]",
-        "[resourceId('Microsoft.Network/virtualNetworks', format('{0}-vnet', variables('spokeNamePrefix')))]"
+        "onprem_vnet",
+        "spoke_vnet"
       ]
     },
-    {
+    "openAI": {
       "type": "Microsoft.CognitiveServices/accounts",
       "apiVersion": "2025-10-01-preview",
       "name": "[variables('openAIName')]",
@@ -341,7 +342,7 @@
         "description": "Creates an Azure OpenAI resource."
       }
     },
-    {
+    "deployment": {
       "type": "Microsoft.CognitiveServices/accounts/deployments",
       "apiVersion": "2025-10-01-preview",
       "name": "[format('{0}/{1}', variables('openAIName'), 'text-embedding-ada-002')]",
@@ -357,10 +358,10 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.CognitiveServices/accounts', variables('openAIName'))]"
+        "openAI"
       ]
     },
-    {
+    "sqlMi_storage": {
       "type": "Microsoft.Storage/storageAccounts",
       "apiVersion": "2025-06-01",
       "name": "[variables('sqlMiStorageName')]",
@@ -373,7 +374,7 @@
         "accessTier": "Hot"
       }
     },
-    {
+    "sqlMi_storage_container": {
       "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
       "apiVersion": "2025-06-01",
       "name": "[format('{0}/default/sql-backup', variables('sqlMiStorageName'))]",
@@ -381,10 +382,10 @@
         "publicAccess": "None"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('sqlMiStorageName'))]"
+        "sqlMi_storage"
       ]
     },
-    {
+    "sqlMi": {
       "type": "Microsoft.Sql/managedInstances",
       "apiVersion": "2024-11-01-preview",
       "name": "[variables('sqlMiPrefix')]",
@@ -413,13 +414,14 @@
           "sid": "[parameters('azureAdUserId')]",
           "tenantId": "[subscription().tenantId]",
           "azureADOnlyAuthentication": false
-        }
+        },
+        "databaseFormat": "AlwaysUpToDate"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', format('{0}-vnet', variables('spokeNamePrefix')))]"
+        "spoke_vnet"
       ]
     },
-    {
+    "sqlMiRoleAssignment": {
       "type": "Microsoft.Authorization/roleAssignments",
       "apiVersion": "2022-04-01",
       "name": "[guid(resourceGroup().name, parameters('azureAdUserId'), 'SqlMiContributorRole')]",
@@ -429,7 +431,7 @@
         "principalType": "User"
       }
     },
-    {
+    "sqlMi_subnet_routetable": {
       "type": "Microsoft.Network/routeTables",
       "apiVersion": "2025-01-01",
       "name": "[format('{0}-rt', variables('sqlMiPrefix'))]",
@@ -642,7 +644,7 @@
         ]
       }
     },
-    {
+    "sqlMi_subnet_nsg": {
       "type": "Microsoft.Network/networkSecurityGroups",
       "apiVersion": "2025-01-01",
       "name": "[format('{0}-nsg', variables('sqlMiPrefix'))]",
@@ -900,7 +902,7 @@
         ]
       }
     },
-    {
+    "bastion": {
       "type": "Microsoft.Network/bastionHosts",
       "apiVersion": "2025-01-01",
       "name": "[format('{0}-bastion', variables('hubNamePrefix'))]",
@@ -926,11 +928,11 @@
         ]
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses', format('{0}-bastion-pip', variables('hubNamePrefix')))]",
-        "[resourceId('Microsoft.Network/virtualNetworks', format('{0}-vnet', variables('hubNamePrefix')))]"
+        "bastion_public_ip",
+        "hub_vnet"
       ]
     },
-    {
+    "bastion_public_ip": {
       "type": "Microsoft.Network/publicIPAddresses",
       "apiVersion": "2025-01-01",
       "name": "[format('{0}-bastion-pip', variables('hubNamePrefix'))]",
@@ -945,7 +947,7 @@
         "publicIPAllocationMethod": "Static"
       }
     },
-    {
+    "onprem_windows_vm": {
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2025-04-01",
       "name": "[format('{0}-vm', variables('onPremWindowsVmPrefix'))]",
@@ -983,10 +985,10 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-nic', variables('onPremWindowsVmPrefix')))]"
+        "onprem_windows_nic"
       ]
     },
-    {
+    "onprem_windows_nic": {
       "type": "Microsoft.Network/networkInterfaces",
       "apiVersion": "2025-01-01",
       "name": "[format('{0}-nic', variables('onPremWindowsVmPrefix'))]",
@@ -1006,10 +1008,10 @@
         ]
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('{0}-vnet', variables('onPremPrefix')), 'default')]"
+        "onprem_subnet"
       ]
     },
-    {
+    "onprem_windows_vm_ext": {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "apiVersion": "2025-04-01",
       "name": "[format('{0}/{1}', format('{0}-vm', variables('onPremWindowsVmPrefix')), 'WindowsVmConfig')]",
@@ -1030,10 +1032,10 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', format('{0}-vm', variables('onPremWindowsVmPrefix')))]"
+        "onprem_windows_vm"
       ]
     },
-    {
+    "onprem_sql_vm": {
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2025-04-01",
       "name": "[format('{0}-vm', variables('onPremSqlVmPrefix'))]",
@@ -1071,10 +1073,10 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-nic', variables('onPremSqlVmPrefix')))]"
+        "onprem_sql_nic"
       ]
     },
-    {
+    "onprem_sql_nsg": {
       "type": "Microsoft.Network/networkSecurityGroups",
       "apiVersion": "2025-01-01",
       "name": "[format('{0}-nsg', variables('onPremSqlVmPrefix'))]",
@@ -1150,7 +1152,7 @@
         ]
       }
     },
-    {
+    "onprem_sql_nic": {
       "type": "Microsoft.Network/networkInterfaces",
       "apiVersion": "2025-01-01",
       "name": "[format('{0}-nic', variables('onPremSqlVmPrefix'))]",
@@ -1173,11 +1175,11 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkSecurityGroups', format('{0}-nsg', variables('onPremSqlVmPrefix')))]",
-        "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('{0}-vnet', variables('onPremPrefix')), 'default')]"
+        "onprem_sql_nsg",
+        "onprem_subnet"
       ]
     },
-    {
+    "onprem_sql_vm_ext": {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "apiVersion": "2025-04-01",
       "name": "[format('{0}/{1}', format('{0}-vm', variables('onPremSqlVmPrefix')), 'SqlVmConfig')]",
@@ -1196,15 +1198,13 @@
           },
           "configurationArguments": {
             "DbBackupFileUrl": "[variables('databaseBackupFileUrl')]",
-            "DatabasePassword": "[variables('labPassword')]",
-            "ArcOnboardingScriptUrl": "[variables('arcOnboardingScriptUrl')]",
-            "Location": "[variables('location')]"
+            "DatabasePassword": "[variables('labPassword')]"
           }
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', format('{0}-vm', variables('onPremSqlVmPrefix')))]"
+        "onprem_sql_vm"
       ]
     }
-  ]
+  }
 }

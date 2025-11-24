@@ -1,4 +1,7 @@
-var resourceNameBase = 'tailspin${take(uniqueString(resourceGroup().id), 7)}'
+var prefix string = 'tailspin'
+var suffix = take(uniqueString(resourceGroup().id), 6)
+
+var resourceNameBase = '${prefix}${suffix}'
 
 @description('The Id of the Azure AD User.')
 param azureAdUserId string
@@ -62,11 +65,6 @@ var openAIName = '${resourceNameBase}-oai'
 var gitHubRepo = '${repositoryOwner}/${repositoryName}'
 var gitHubRepoScriptPath = 'Hands-on%20lab/resources/deployment/onprem'
 var gitHubRepoUrl = 'https://github.com/${gitHubRepo}/raw/refs/heads/${repositoryBranch}/${gitHubRepoScriptPath}'
-
-
-//var arcOnboardingSpName = 'arc-onboarding-sp'
-var arcOnboardingScriptName = 'RegisterSqlServerArc.ps1'
-var arcOnboardingScriptUrl = '${gitHubRepoUrl}/${arcOnboardingScriptName}'
 
 var databaseBackupFile = 'database.bak'
 var databaseBackupFileUrl = '${gitHubRepoUrl}/${databaseBackupFile}'
@@ -341,7 +339,7 @@ resource sqlMi 'Microsoft.Sql/managedInstances@2024-11-01-preview' = {
             tenantId: subscription().tenantId
             azureADOnlyAuthentication: false
         }
-        //databaseFormat: 'AlwaysUpToDate'
+        databaseFormat: 'AlwaysUpToDate'
     }
 }
 
@@ -952,43 +950,6 @@ resource onprem_windows_vm_ext 'Microsoft.Compute/virtualMachines/extensions@202
 }
 
 /* ****************************
-Service Principal for Arc Onboarding
-**************************** */
-/*
-// Create a service principal (app registration)
-resource arcOnboardingSp 'Microsoft.Graph/applications@1.0' = {
-  name: arcOnboardingSpName
-  properties: {
-    displayName: arcOnboardingSpName
-  }
-}
-
-// Create a service principal object
-resource spObj 'Microsoft.Graph/servicePrincipals@1.0' = {
-  name: arcOnboardingSp.name
-  properties: {
-    appId: arcOnboardingSp.properties.appId
-    displayName: arcOnboardingSpName
-    accountEnabled: true
-    appRoleAssignmentRequired: false
-  }
-}
-
-// Assign the "Azure Connected Machine Onboarding" role to the identity fo the deployment user
-resource spRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(resourceGroup().name, spObj.id, 'ArcOnboardingRole')
-  properties: {
-    roleDefinitionId: subscriptionResourceId(
-      'Microsoft.Authorization/roleDefinitions',
-      'b64e21ea-ac4e-4cdf-9dc9-5b892992bee7' // Azure Connected Machine Onboarding role
-    )
-    principalId: spObj.id
-    principalType: 'ServicePrincipal'
-  }
-}
-*/
-
-/* ****************************
 On-premises SQL VM
 **************************** */
 resource onprem_sql_vm 'Microsoft.Compute/virtualMachines@2025-04-01' = {
@@ -1146,13 +1107,6 @@ resource onprem_sql_vm_ext 'Microsoft.Compute/virtualMachines/extensions@2025-04
             configurationArguments: {
                 DbBackupFileUrl: databaseBackupFileUrl
                 DatabasePassword: labPassword
-                ArcOnboardingScriptUrl: arcOnboardingScriptUrl
-                Location: location
-                //ResourceGroup: resourceGroup().name
-                //SubscriptionId: subscription().subscriptionId
-                //TenantId: tenant().tenantId
-                //SpAppId: arcOnboardingSp.id
-                //SpSecret: spObj.
             }
         }
     }
