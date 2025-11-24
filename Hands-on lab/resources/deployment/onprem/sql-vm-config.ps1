@@ -14,7 +14,14 @@ Configuration Main {
         [String]$DbBackupFileUrl,
 
         [Parameter(Mandatory)]
-        [String] $DatabasePassword
+        [String]$DatabasePassword,
+        
+        [Parameter(Mandatory)]
+        [String]$ArcOnboardingScriptUrl,
+
+        [Parameter(Mandatory)]
+        [String]$Location
+        #>
     )
     Import-DscResource -ModuleName 'PSDesiredStateConfiguration'
 
@@ -572,6 +579,28 @@ EXEC sp_certificate_add_issuer @CERTID, N'*.database.windows.net';
             }
         }
 
+        # Download Arc onboarding script
+        Script DownloadDbBackup {
+            GetScript = {
+                $arcOnboardingScriptFileName = Split-Path $using:ArcOnboardingScriptUrl -Leaf
+                $dbDestination = "C:\scripts\$arcOnboardingScriptFileName"
+                @{ Result = (Test-Path $dbDestination) }
+            }
+            TestScript = {
+                $arcOnboardingScriptFileName = Split-Path $using:ArcOnboardingScriptUrl -Leaf
+                $dbDestination = "C:\scripts\$arcOnboardingScriptFileName"
+                Test-Path $dbDestination
+            }
+            SetScript = {
+                $arcOnboardingScriptFileName = Split-Path $using:ArcOnboardingScriptUrl -Leaf
+                $dbDestination = "C:\scripts\$arcOnboardingScriptFileName"
+                Write-Verbose "Downloading Arc onboarding script from $using:ArcOnboardingScriptUrl..."
+                [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+                Invoke-WebRequest -Uri $using:ArcOnboardingScriptUrl -OutFile $dbDestination -ErrorAction Stop
+                Write-Verbose "Arc onboarding script downloaded to $dbDestination."
+            }
+        }
+
         # Disable Windows Azure guest agent to allow Azure Arc installation
         Script ScheduleDisableGuestAgent {
             DependsOn = '[Script]SetArcTestEnvVar'
@@ -632,5 +661,65 @@ Stop-Transcript
                 }
             }
         }
+
+        <#
+        # Register SQL Server with Azure Arc after Guest Agent is disabled
+        Script ScheduleRegisterSqlServerArc {
+            DependsOn = '[Script]ScheduleDisableGuestAgent'
+            GetScript = {
+                $task = Get-ScheduledTask -TaskName 'RegisterSqlServerArcAfterDSC' -ErrorAction SilentlyContinue
+                if ($null -ne $task) { @{ Result = "Scheduled" } } else { @{ Result = "NotScheduled" } }
+            }
+            TestScript = {
+                $task = Get-ScheduledTask -TaskName 'RegisterSqlServerArcAfterDSC' -ErrorAction SilentlyContinue
+                return ($null -ne $task)
+            }
+            SetScript = {
+                try {
+                    Write-Verbose "Preparing scheduled task for SQL Server Arc registration..."
+
+                    $arcOnboardingScriptFileName = Split-Path $using:ArcOnboardingScriptUrl -Leaf
+                    $scriptPath = "C:\scripts\$arcOnboardingScriptFileName"
+
+                    if (-not (Test-Path -LiteralPath $scriptPath)) {
+                        throw "Registration script not found at $scriptPath"
+                    }
+
+                    # Define parameters (these should be securely parameterized in DSC configuration)
+                    $servicePrincipalAppId    = $using:servicePrincipalAppId
+                    $servicePrincipalTenantId = $using:servicePrincipalTenantId
+                    $servicePrincipalSecret   = $using:servicePrincipalSecret
+
+                    $argString = "-NoProfile -ExecutionPolicy Bypass -File `"$scriptPath`" " +
+                                "-servicePrincipalAppId `"$using:ServicePrincipalAppId`" " +
+                                "-servicePrincipalTenantId `"$using:ServicePrincipalTenantId`" " +
+                                "-servicePrincipalSecret `"$using:ServicePrincipalSecret`" " +
+                                "-tenantId `"$using:TenantId`" " +
+                                "-subId `"$using:SubscriptionId`" " +
+                                "-resourceGroup `"$using:ResourceGroup`" " +
+                                "-location `"$using:Location`""
+
+                    $taskAction    = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument $argString
+                    $taskTrigger   = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(3)  # run ~2 minutes after DisableGuestAgent
+                    $taskPrincipal = New-ScheduledTaskPrincipal -UserId 'SYSTEM' -RunLevel Highest
+                    $taskSettings  = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable
+
+                    Register-ScheduledTask -TaskName 'RegisterSqlServerArcAfterDSC' `
+                        -Action $taskAction `
+                        -Trigger $taskTrigger `
+                        -Principal $taskPrincipal `
+                        -Settings $taskSettings -Force | Out-Null
+
+                    Write-Verbose "Scheduled task created. It will run RegisterSqlServerArc.ps1 with parameters and then delete itself."
+
+                    # Optional: add self-delete logic inside RegisterSqlServerArc.ps1
+                    # schtasks /Delete /TN 'RegisterSqlServerArcAfterDSC' /F
+                } catch {
+                    Write-Error "Failed to schedule SQL Server Arc registration task: $($_.Exception.Message)"
+                    throw
+                }
+            }
+        }
+        #>
     }
 }

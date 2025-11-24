@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.32.4.45862",
-      "templateHash": "3667681544933502162"
+      "version": "0.39.26.7824",
+      "templateHash": "13684974225810527699"
     }
   },
   "parameters": {
@@ -84,6 +84,13 @@
       "metadata": {
         "description": "The owner of the GitHub repository containing deployment scripts."
       }
+    },
+    "restore": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Restore the service instead of creating a new instance. This is useful if you previously soft-deleted the service and want to restore it. If you are restoring a service, set this to true. Otherwise, leave this as false."
+      }
     }
   },
   "variables": {
@@ -96,9 +103,12 @@
     "onPremPrefix": "[format('{0}-onprem', variables('resourceNameBase'))]",
     "onPremSqlVmPrefix": "[format('{0}-sql', variables('onPremPrefix'))]",
     "onPremWindowsVmPrefix": "[format('{0}-win', variables('onPremPrefix'))]",
+    "openAIName": "[format('{0}-oai', variables('resourceNameBase'))]",
     "gitHubRepo": "[format('{0}/{1}', parameters('repositoryOwner'), parameters('repositoryName'))]",
     "gitHubRepoScriptPath": "Hands-on%20lab/resources/deployment/onprem",
     "gitHubRepoUrl": "[format('https://github.com/{0}/raw/refs/heads/{1}/{2}', variables('gitHubRepo'), parameters('repositoryBranch'), variables('gitHubRepoScriptPath'))]",
+    "arcOnboardingScriptName": "RegisterSqlServerArc.ps1",
+    "arcOnboardingScriptUrl": "[format('{0}/{1}', variables('gitHubRepoUrl'), variables('arcOnboardingScriptName'))]",
     "databaseBackupFile": "database.bak",
     "databaseBackupFileUrl": "[format('{0}/{1}', variables('gitHubRepoUrl'), variables('databaseBackupFile'))]",
     "sqlVmScriptName": "sql-vm-config.ps1",
@@ -313,6 +323,44 @@
       ]
     },
     {
+      "type": "Microsoft.CognitiveServices/accounts",
+      "apiVersion": "2025-10-01-preview",
+      "name": "[variables('openAIName')]",
+      "location": "[variables('location')]",
+      "kind": "OpenAI",
+      "sku": {
+        "name": "S0",
+        "tier": "Standard"
+      },
+      "properties": {
+        "customSubDomainName": "[variables('openAIName')]",
+        "publicNetworkAccess": "Enabled",
+        "restore": "[parameters('restore')]"
+      },
+      "metadata": {
+        "description": "Creates an Azure OpenAI resource."
+      }
+    },
+    {
+      "type": "Microsoft.CognitiveServices/accounts/deployments",
+      "apiVersion": "2025-10-01-preview",
+      "name": "[format('{0}/{1}', variables('openAIName'), 'text-embedding-ada-002')]",
+      "sku": {
+        "name": "Standard",
+        "capacity": 120
+      },
+      "properties": {
+        "model": {
+          "format": "OpenAI",
+          "name": "text-embedding-ada-002",
+          "version": "2"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.CognitiveServices/accounts', variables('openAIName'))]"
+      ]
+    },
+    {
       "type": "Microsoft.Storage/storageAccounts",
       "apiVersion": "2025-06-01",
       "name": "[variables('sqlMiStorageName')]",
@@ -365,7 +413,8 @@
           "sid": "[parameters('azureAdUserId')]",
           "tenantId": "[subscription().tenantId]",
           "azureADOnlyAuthentication": false
-        }
+        },
+        "databaseFormat": "AlwaysUpToDate"
       },
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', format('{0}-vnet', variables('spokeNamePrefix')))]"
@@ -1148,7 +1197,9 @@
           },
           "configurationArguments": {
             "DbBackupFileUrl": "[variables('databaseBackupFileUrl')]",
-            "DatabasePassword": "[variables('labPassword')]"
+            "DatabasePassword": "[variables('labPassword')]",
+            "ArcOnboardingScriptUrl": "[variables('arcOnboardingScriptUrl')]",
+            "Location": "[variables('location')]"
           }
         }
       },

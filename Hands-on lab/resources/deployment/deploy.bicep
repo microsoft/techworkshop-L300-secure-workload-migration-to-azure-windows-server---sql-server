@@ -45,6 +45,9 @@ param repositoryOwner string = 'Tahubu-AI'
 
 var location = resourceGroup().location
 
+@description('Restore the service instead of creating a new instance. This is useful if you previously soft-deleted the service and want to restore it. If you are restoring a service, set this to true. Otherwise, leave this as false.')
+param restore bool = false
+
 var hubNamePrefix = '${resourceNameBase}-hub'
 var spokeNamePrefix = '${resourceNameBase}-spoke'
 var sqlMiPrefix = '${resourceNameBase}-sqlmi'
@@ -54,9 +57,16 @@ var onPremPrefix = '${resourceNameBase}-onprem'
 var onPremSqlVmPrefix = '${onPremPrefix}-sql'
 var onPremWindowsVmPrefix = '${onPremPrefix}-win'
 
+var openAIName = '${resourceNameBase}-oai'
+
 var gitHubRepo = '${repositoryOwner}/${repositoryName}'
 var gitHubRepoScriptPath = 'Hands-on%20lab/resources/deployment/onprem'
 var gitHubRepoUrl = 'https://github.com/${gitHubRepo}/raw/refs/heads/${repositoryBranch}/${gitHubRepoScriptPath}'
+
+
+//var arcOnboardingSpName = 'arc-onboarding-sp'
+var arcOnboardingScriptName = 'RegisterSqlServerArc.ps1'
+var arcOnboardingScriptUrl = '${gitHubRepoUrl}/${arcOnboardingScriptName}'
 
 var databaseBackupFile = 'database.bak'
 var databaseBackupFileUrl = '${gitHubRepoUrl}/${databaseBackupFile}'
@@ -247,6 +257,41 @@ resource onprem_spoke_vnet_peering 'Microsoft.Network/virtualNetworks/virtualNet
 }
 
 /* ****************************
+Azure OpenAI
+**************************** */
+@description('Creates an Azure OpenAI resource.')
+resource openAI 'Microsoft.CognitiveServices/accounts@2025-10-01-preview' = {
+  name: openAIName
+  location: location
+  kind: 'OpenAI'
+  sku: {
+    name: 'S0'
+    tier: 'Standard'
+  }
+  properties: {
+    customSubDomainName: openAIName
+    publicNetworkAccess: 'Enabled'
+    restore: restore
+  }
+}
+
+resource deployment 'Microsoft.CognitiveServices/accounts/deployments@2025-10-01-preview' = {
+  parent: openAI
+  name: 'text-embedding-ada-002'
+  sku: {
+    name: 'Standard'
+    capacity: 120
+  }
+  properties: {
+    model: {
+      format: 'OpenAI'
+      name: 'text-embedding-ada-002'
+      version: '2'
+    }
+  }
+}
+
+/* ****************************
 Azure SQL Managed Instance
 **************************** */
 resource sqlMi_storage 'Microsoft.Storage/storageAccounts@2025-06-01' = {
@@ -296,6 +341,7 @@ resource sqlMi 'Microsoft.Sql/managedInstances@2024-11-01-preview' = {
             tenantId: subscription().tenantId
             azureADOnlyAuthentication: false
         }
+        databaseFormat: 'AlwaysUpToDate'
     }
 }
 
@@ -906,6 +952,43 @@ resource onprem_windows_vm_ext 'Microsoft.Compute/virtualMachines/extensions@202
 }
 
 /* ****************************
+Service Principal for Arc Onboarding
+**************************** */
+/*
+// Create a service principal (app registration)
+resource arcOnboardingSp 'Microsoft.Graph/applications@1.0' = {
+  name: arcOnboardingSpName
+  properties: {
+    displayName: arcOnboardingSpName
+  }
+}
+
+// Create a service principal object
+resource spObj 'Microsoft.Graph/servicePrincipals@1.0' = {
+  name: arcOnboardingSp.name
+  properties: {
+    appId: arcOnboardingSp.properties.appId
+    displayName: arcOnboardingSpName
+    accountEnabled: true
+    appRoleAssignmentRequired: false
+  }
+}
+
+// Assign the "Azure Connected Machine Onboarding" role to the identity fo the deployment user
+resource spRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(resourceGroup().name, spObj.id, 'ArcOnboardingRole')
+  properties: {
+    roleDefinitionId: subscriptionResourceId(
+      'Microsoft.Authorization/roleDefinitions',
+      'b64e21ea-ac4e-4cdf-9dc9-5b892992bee7' // Azure Connected Machine Onboarding role
+    )
+    principalId: spObj.id
+    principalType: 'ServicePrincipal'
+  }
+}
+*/
+
+/* ****************************
 On-premises SQL VM
 **************************** */
 resource onprem_sql_vm 'Microsoft.Compute/virtualMachines@2025-04-01' = {
@@ -1063,6 +1146,13 @@ resource onprem_sql_vm_ext 'Microsoft.Compute/virtualMachines/extensions@2025-04
             configurationArguments: {
                 DbBackupFileUrl: databaseBackupFileUrl
                 DatabasePassword: labPassword
+                ArcOnboardingScriptUrl: arcOnboardingScriptUrl
+                Location: location
+                //ResourceGroup: resourceGroup().name
+                //SubscriptionId: subscription().subscriptionId
+                //TenantId: tenant().tenantId
+                //SpAppId: arcOnboardingSp.id
+                //SpSecret: spObj.
             }
         }
     }
