@@ -341,7 +341,7 @@ resource sqlMi 'Microsoft.Sql/managedInstances@2024-11-01-preview' = {
             tenantId: subscription().tenantId
             azureADOnlyAuthentication: false
         }
-        databaseFormat: 'AlwaysUpToDate'
+        //databaseFormat: 'AlwaysUpToDate'
     }
 }
 

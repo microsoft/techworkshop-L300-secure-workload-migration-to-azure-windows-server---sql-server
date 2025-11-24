@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.39.26.7824",
-      "templateHash": "13684974225810527699"
+      "templateHash": "4582387369243158670"
     }
   },
   "parameters": {
@@ -413,8 +413,7 @@
           "sid": "[parameters('azureAdUserId')]",
           "tenantId": "[subscription().tenantId]",
           "azureADOnlyAuthentication": false
-        },
-        "databaseFormat": "AlwaysUpToDate"
+        }
       },
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', format('{0}-vnet', variables('spokeNamePrefix')))]"

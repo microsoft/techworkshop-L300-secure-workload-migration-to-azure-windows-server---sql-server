@@ -580,7 +580,7 @@ EXEC sp_certificate_add_issuer @CERTID, N'*.database.windows.net';
         }
 
         # Download Arc onboarding script
-        Script DownloadDbBackup {
+        Script DownloadArcOnboardingScript {
             GetScript = {
                 $arcOnboardingScriptFileName = Split-Path $using:ArcOnboardingScriptUrl -Leaf
                 $dbDestination = "C:\scripts\$arcOnboardingScriptFileName"
@@ -665,7 +665,7 @@ Stop-Transcript
         <#
         # Register SQL Server with Azure Arc after Guest Agent is disabled
         Script ScheduleRegisterSqlServerArc {
-            DependsOn = '[Script]ScheduleDisableGuestAgent'
+            DependsOn = '[Script]DownloadArcOnboardingScript', '[Script]ScheduleDisableGuestAgent'
             GetScript = {
                 $task = Get-ScheduledTask -TaskName 'RegisterSqlServerArcAfterDSC' -ErrorAction SilentlyContinue
                 if ($null -ne $task) { @{ Result = "Scheduled" } } else { @{ Result = "NotScheduled" } }
