@@ -8,81 +8,41 @@ Configuration ArcConnect {
         # Disable the Server Manager from starting on login
         Script DisableServerManager {
             GetScript = {
+                if (-not (Get-Module -Name ScheduledTasks)) {
+                    Import-Module ScheduledTasks -ErrorAction Stop
+                }
                 # Return current state for reporting
-                $task = Get-ScheduledTask -TaskName 'ServerManager'
+                $task = Get-ScheduledTask -TaskName 'ServerManager' -ErrorAction SilentlyContinue
                 @{ Result = $task.State }
             }
             TestScript = {
+                if (-not (Get-Module -Name ScheduledTasks)) {
+                    Import-Module ScheduledTasks -ErrorAction Stop
+                }
                 # Check if the task is already disabled
-                $task = Get-ScheduledTask -TaskName 'ServerManager'
-                return ($task.State -eq 'Disabled')
+                $task = Get-ScheduledTask -TaskName 'ServerManager' -ErrorAction SilentlyContinue
+                return ($task -and ($task.State -eq 'Disabled'))
             }
             SetScript = {
+                if (-not (Get-Module -Name ScheduledTasks)) {
+                    Import-Module ScheduledTasks -ErrorAction Stop
+                }
                 # Disable the Server Manager scheduled task
                 Get-ScheduledTask -TaskName 'ServerManager' | Disable-ScheduledTask -ErrorAction SilentlyContinue
-            }
-        }
-
-        # Disable Microsoft Edge features
-        Script DisableEdgeFeatures {
-            GetScript = {
-                $EdgePolicyPath = "HKLM:\SOFTWARE\Policies\Microsoft\Edge"
-
-                if (Test-Path $EdgePolicyPath) {
-                    $props = Get-ItemProperty -Path $EdgePolicyPath -ErrorAction SilentlyContinue
-                    @{
-                        HideFirstRunExperience       = $props.HideFirstRunExperience
-                        DefaultBrowserSettingEnabled = $props.DefaultBrowserSettingEnabled
-                        HubsSidebarEnabled           = $props.HubsSidebarEnabled
-                    }
-                }
-                else {
-                    @{ Result = "Edge policy key not present" }
-                }
-            }
-            TestScript = {
-                $EdgePolicyPath = "HKLM:\SOFTWARE\Policies\Microsoft\Edge"
-
-                # If the key doesn't exist, we need to run SetScript
-                if (-not (Test-Path $EdgePolicyPath)) {
-                    return $false
-                }
-
-                $props = Get-ItemProperty -Path $EdgePolicyPath -ErrorAction SilentlyContinue
-
-                # Check if all desired values are already set
-                return (
-                    ($props.HideFirstRunExperience -eq 1) -and
-                    ($props.DefaultBrowserSettingEnabled -eq 0) -and
-                    ($props.HubsSidebarEnabled -eq 0)
-                )
-            }
-            SetScript = {
-                # Registry path for Edge policy
-                $EdgePolicyPath = "HKLM:\SOFTWARE\Policies\Microsoft\Edge"
-
-                # Create the key if it doesn't exist
-                if (-not (Test-Path $EdgePolicyPath)) {
-                    New-Item -Path $EdgePolicyPath -Force | Out-Null
-                }
-
-                Set-ItemProperty -Path $EdgePolicyPath -Name "HideFirstRunExperience" -Type DWord -Value 1 -ErrorAction SilentlyContinue
-                Set-ItemProperty -Path $EdgePolicyPath -Name "DefaultBrowserSettingEnabled" -Type DWord -Value 0 -ErrorAction SilentlyContinue
-                Set-ItemProperty -Path $EdgePolicyPath -Name "HubsSidebarEnabled" -Type DWord -Value 0 -ErrorAction SilentlyContinue
-
-                Write-Verbose "Microsoft Edge First Run Experience disabled successfully."
             }
         }
 
         # AddFirewallRules
         Script AddFirewallRules {
             GetScript = { @{ Result = "FirewallRulesAdded" } }
-            TestScript = { return $false}
+            TestScript = {
+                $rule = Get-NetFirewallRule -Name "block_azure_imds" -ErrorAction SilentlyContinue
+                return ($null -ne $rule)
+            }
             SetScript = {
-                # Firewall rules
-                Write-Host "Configuring firewall rules Arc..."
+                Write-Verbose "Configuring firewall rules Arc..."
                 if (-not (Get-NetFirewallRule -Name "block_azure_imds" -ErrorAction SilentlyContinue)) {
-                    New-NetFirewallRule -Name block_azure_imds -DisplayName "Block Azure IMDS" -Enabled True -Profile Any -Direction Outbound -Action Block -RemoteAddress 169.254.169.254
+                    New-NetFirewallRule -Name block_azure_imds -DisplayName "Block Azure IMDS" -Enabled True -Profile Any -Direction Outbound -Action Block -RemoteAddress 169.254.169.254 -Confirm:$false
                     Write-Verbose "Firewall rule added: Block Azure IMDS"
                 }
             }
@@ -107,16 +67,25 @@ Configuration ArcConnect {
         Script ScheduleDisableGuestAgent {
             DependsOn = '[Script]SetArcTestEnvVar'
             GetScript = {
+                if (-not (Get-Module -Name ScheduledTasks)) {
+                    Import-Module ScheduledTasks -ErrorAction Stop
+                }
                 $task = Get-ScheduledTask -TaskName 'DisableGuestAgentAfterDSC' -ErrorAction SilentlyContinue
                 if ($null -ne $task) { @{ Result = "Scheduled" } } else { @{ Result = "NotScheduled" } }
             }
             TestScript = {
+                if (-not (Get-Module -Name ScheduledTasks)) {
+                    Import-Module ScheduledTasks -ErrorAction Stop
+                }
                 $task = Get-ScheduledTask -TaskName 'DisableGuestAgentAfterDSC' -ErrorAction SilentlyContinue
                 return ($null -ne $task)
             }
             SetScript = {
                 try {
                     Write-Verbose "Preparing path for scheduled task payload..."
+                    if (-not (Get-Module -Name ScheduledTasks)) {
+                        Import-Module ScheduledTasks -ErrorAction Stop
+                    }
                     $prepDir    = 'C:\ArcPrep'
                     $scriptPath = Join-Path $prepDir 'DisableGuestAgent.ps1'
 
@@ -147,8 +116,8 @@ Stop-Transcript
 
                     Write-Verbose "Creating scheduled task to run payload..."
                     $taskAction    = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$scriptPath`""
-                    $taskTrigger   = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1)
-                    $taskPrincipal = New-ScheduledTaskPrincipal -UserId 'SYSTEM' -RunLevel Highest
+                    $taskTrigger   = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(2)
+                    $taskPrincipal = New-ScheduledTaskPrincipal -UserId 'SYSTEM' -LogonType ServiceAccount -RunLevel Highest
                     $taskSettings  = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable
 
                     Register-ScheduledTask -TaskName 'DisableGuestAgentAfterDSC' `
