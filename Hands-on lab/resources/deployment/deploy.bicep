@@ -1,4 +1,7 @@
-var resourceNameBase = 'tailspin${take(uniqueString(resourceGroup().id), 7)}'
+var prefix string = 'tailspin'
+var suffix = take(uniqueString(resourceGroup().id), 6)
+
+var resourceNameBase = '${prefix}${suffix}'
 
 @description('The Id of the Azure AD User.')
 param azureAdUserId string
@@ -45,6 +48,9 @@ param repositoryOwner string = 'Tahubu-AI'
 
 var location = resourceGroup().location
 
+@description('Restore the service instead of creating a new instance. This is useful if you previously soft-deleted the service and want to restore it. If you are restoring a service, set this to true. Otherwise, leave this as false.')
+param restore bool = false
+
 var hubNamePrefix = '${resourceNameBase}-hub'
 var spokeNamePrefix = '${resourceNameBase}-spoke'
 var sqlMiPrefix = '${resourceNameBase}-sqlmi'
@@ -53,6 +59,8 @@ var sqlMiStorageName = '${resourceNameBase}sqlmistor'
 var onPremPrefix = '${resourceNameBase}-onprem'
 var onPremSqlVmPrefix = '${onPremPrefix}-sql'
 var onPremWindowsVmPrefix = '${onPremPrefix}-win'
+
+var openAIName = '${resourceNameBase}-oai'
 
 var gitHubRepo = '${repositoryOwner}/${repositoryName}'
 var gitHubRepoScriptPath = 'Hands-on%20lab/resources/deployment/onprem'
@@ -222,6 +230,65 @@ resource spoke_hub_vnet_peering 'Microsoft.Network/virtualNetworks/virtualNetwor
     }
 }
 
+resource spoke_onprem_vnet_peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2025-01-01' = {
+  parent: spoke_vnet
+  name: 'spoke-onprem'
+  properties: {
+    remoteVirtualNetwork: {
+      id: onprem_vnet.id
+    }
+    allowVirtualNetworkAccess: true
+    allowForwardedTraffic: true
+  }
+}
+
+resource onprem_spoke_vnet_peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2025-01-01' = {
+  parent: onprem_vnet
+  name: 'onprem-spoke'
+  properties: {
+    remoteVirtualNetwork: {
+      id: spoke_vnet.id
+    }
+    allowVirtualNetworkAccess: true
+    allowForwardedTraffic: true
+  }
+}
+
+/* ****************************
+Azure OpenAI
+**************************** */
+@description('Creates an Azure OpenAI resource.')
+resource openAI 'Microsoft.CognitiveServices/accounts@2025-10-01-preview' = {
+  name: openAIName
+  location: location
+  kind: 'OpenAI'
+  sku: {
+    name: 'S0'
+    tier: 'Standard'
+  }
+  properties: {
+    customSubDomainName: openAIName
+    publicNetworkAccess: 'Enabled'
+    restore: restore
+  }
+}
+
+resource deployment 'Microsoft.CognitiveServices/accounts/deployments@2025-10-01-preview' = {
+  parent: openAI
+  name: 'text-embedding-ada-002'
+  sku: {
+    name: 'Standard'
+    capacity: 120
+  }
+  properties: {
+    model: {
+      format: 'OpenAI'
+      name: 'text-embedding-ada-002'
+      version: '2'
+    }
+  }
+}
+
 /* ****************************
 Azure SQL Managed Instance
 **************************** */
@@ -272,6 +339,7 @@ resource sqlMi 'Microsoft.Sql/managedInstances@2024-11-01-preview' = {
             tenantId: subscription().tenantId
             azureADOnlyAuthentication: false
         }
+        databaseFormat: 'AlwaysUpToDate'
     }
 }
 
@@ -287,46 +355,6 @@ resource sqlMiRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01
     principalType: 'User'
   }
 }
-/*
-resource sqlmi_private_endpoint 'Microsoft.Network/privateEndpoints@2025-01-01' = {
-  name: '${sqlMiPrefix}-pe'
-  location: location
-  properties: {
-    subnet: {
-      id: onprem_subnet.id
-    }
-    privateLinkServiceConnections: [
-      {
-        name: 'sqlmi-connection'
-        properties: {
-          privateLinkServiceId: sqlMi.id
-          groupIds: [
-            'managedInstance'
-          ]
-          requestMessage: 'Private endpoint connection for SQL MI'
-        }
-      }
-    ]
-  }
-}
-
-resource sqlmi_dns_zone 'Microsoft.Network/privateDnsZones@2024-06-01' = {
-  name: 'privatelink.database.windows.net'
-  location: 'global'
-}
-
-resource sqlmi_dns_link 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2024-06-01' = {
-  parent: sqlmi_dns_zone
-  name: '${onPremPrefix}-dnslink'
-  location: 'global'
-  properties: {
-    virtualNetwork: {
-      id: onprem_vnet.id
-    }
-    registrationEnabled: false
-  }
-}
-*/
 
 resource sqlMi_subnet_routetable 'Microsoft.Network/routeTables@2025-01-01'= {
     name: '${sqlMiPrefix}-rt'

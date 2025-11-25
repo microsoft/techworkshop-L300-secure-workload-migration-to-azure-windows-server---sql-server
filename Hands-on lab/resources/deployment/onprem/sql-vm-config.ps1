@@ -14,7 +14,7 @@ Configuration Main {
         [String]$DbBackupFileUrl,
 
         [Parameter(Mandatory)]
-        [String] $DatabasePassword
+        [String]$DatabasePassword
     )
     Import-DscResource -ModuleName 'PSDesiredStateConfiguration'
 
@@ -175,6 +175,37 @@ Configuration Main {
                 Write-Verbose "Enabling Always On Availability Groups..."
                 Enable-SqlAlwaysOn -ServerInstance "Localhost" -Force
                 Write-Verbose "Always On Availability Groups enabled. SQL service restart required."
+            }
+        }
+
+        # Enable travel flags to improve replication performance
+        Script EnableAgTraceFlags {
+            GetScript = {
+                $regPath = "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQLServer\Parameters"
+                $params = Get-ItemProperty -Path $regPath
+                @{ Result = ($params.PSObject.Properties | Where-Object { $_.Name -like "SQLArg*" } | Select-Object -ExpandProperty Value) }
+            }
+            TestScript = {
+                $regPath = "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQLServer\Parameters"
+                $params = Get-ItemProperty -Path $regPath
+                ($params.PSObject.Properties.Value -contains "-T1800") -and
+                ($params.PSObject.Properties.Value -contains "-T9567")
+            }
+            SetScript = {
+                $regPath = "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQLServer\Parameters"
+                $params = Get-ItemProperty -Path $regPath
+                $existing = $params.PSObject.Properties | Where-Object { $_.Name -like "SQLArg*" } | Select-Object -ExpandProperty Value
+                $nextIndex = ($params.PSObject.Properties | Where-Object { $_.Name -like "SQLArg*" }).Count
+
+                if (-not ($existing -contains "-T1800")) {
+                    New-ItemProperty -Path $regPath -Name "SQLArg$nextIndex" -Value "-T1800" -PropertyType String -Force
+                    $nextIndex++
+                }
+                if (-not ($existing -contains "-T9567")) {
+                    New-ItemProperty -Path $regPath -Name "SQLArg$nextIndex" -Value "-T9567" -PropertyType String -Force
+                }
+
+                Write-Verbose "Trace flags added via registry. SQL Server service restart required."
             }
         }
 
