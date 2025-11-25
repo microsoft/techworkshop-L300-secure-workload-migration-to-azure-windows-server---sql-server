@@ -6,7 +6,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.39.26.7824",
-      "templateHash": "6024754393411910608"
+      "templateHash": "8089549015204698057"
     }
   },
   "parameters": {
@@ -965,10 +965,7 @@
             "createOption": "fromImage"
           },
           "imageReference": {
-            "publisher": "MicrosoftWindowsServer",
-            "offer": "WindowsServer",
-            "sku": "2022-datacenter-g2",
-            "version": "latest"
+            "communityGalleryImageId": "/CommunityGalleries/Tahubu-607896e6-c4b5-4245-bfb6-c6b57aa9aa62/Images/WS2012R2_SQL2014_Base/Versions/latest"
           }
         },
         "networkProfile": {

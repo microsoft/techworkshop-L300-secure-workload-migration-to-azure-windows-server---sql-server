@@ -520,38 +520,38 @@ EXEC sp_certificate_add_issuer @CERTID, N'*.database.windows.net';
             GetScript = { @{ Result = "FirewallRulesAdded" } }
             TestScript = { return $false }
             SetScript = {
-                Write-Host "Configuring firewall rules for Arc, SQL, and AOG..."
+                Write-Verbose "Configuring firewall rules for Arc, SQL, and AOG..."
                 if (-not (Get-NetFirewallRule -Name "block_azure_imds" -ErrorAction SilentlyContinue)) {
-                    New-NetFirewallRule -Name block_azure_imds -DisplayName "Block Azure IMDS" -Enabled True -Profile Any -Direction Outbound -Action Block -RemoteAddress 169.254.169.254
+                    New-NetFirewallRule -Name block_azure_imds -DisplayName "Block Azure IMDS" -Enabled True -Profile Any -Direction Outbound -Action Block -RemoteAddress 169.254.169.254 -Confirm:$false
                     Write-Verbose "Firewall rule added: Block Azure IMDS"
                 }
                 if (-not (Get-NetFirewallRule -Name "sql_server_inbound" -ErrorAction SilentlyContinue)) {
-                    New-NetFirewallRule -Name sql_server_inbound -DisplayName "SQL Server Inbound" -Direction Inbound -Protocol TCP -LocalPort 1433 -Action Allow
-                    Write-Host "Firewall rule added: SQL Server Inbound (1433)"
+                    New-NetFirewallRule -Name sql_server_inbound -DisplayName "SQL Server Inbound" -Direction Inbound -Protocol TCP -LocalPort 1433 -Action Allow -Confirm:$false
+                    Write-Verbose "Firewall rule added: SQL Server Inbound (1433)"
                 }
                 if (-not (Get-NetFirewallRule -Name "sql_server_outbound" -ErrorAction SilentlyContinue)) {
-                    New-NetFirewallRule -Name sql_server_outbound -DisplayName "SQL Server Outbound" -Direction Outbound -Protocol TCP -LocalPort 1433 -Action Allow -Profile Any
-                    Write-Host "Firewall rule added: SQL Server Outbound (1433)"
+                    New-NetFirewallRule -Name sql_server_outbound -DisplayName "SQL Server Outbound" -Direction Outbound -Protocol TCP -LocalPort 1433 -Action Allow -Profile Any -Confirm:$false
+                    Write-Verbose "Firewall rule added: SQL Server Outbound (1433)"
                 }
                 if (-not (Get-NetFirewallRule -Name "sql_ag_endpoint_inbound" -ErrorAction SilentlyContinue)) {
-                    New-NetFirewallRule -Name sql_ag_endpoint_inbound -DisplayName "SQL AG Endpoint Inbound" -Direction Inbound -Profile Any -Action Allow -LocalPort 5022 -Protocol TCP
-                    Write-Host "Firewall rule added: SQL AG Endpoint Inbound (5022)"
+                    New-NetFirewallRule -Name sql_ag_endpoint_inbound -DisplayName "SQL AG Endpoint Inbound" -Direction Inbound -Profile Any -Action Allow -LocalPort 5022 -Protocol TCP -Confirm:$false
+                    Write-Verbose "Firewall rule added: SQL AG Endpoint Inbound (5022)"
                 }
                 if (-not (Get-NetFirewallRule -Name "sql_ag_endpoint_outbound" -ErrorAction SilentlyContinue)) {
-                    New-NetFirewallRule -Name sql_ag_endpoint_outbound -DisplayName "SQL AG Endpoint Outbound" -Direction Outbound -Profile Any -Action Allow -LocalPort 5022 -Protocol TCP
-                    Write-Host "Firewall rule added: SQL AG Endpoint Outbound (5022)"
+                    New-NetFirewallRule -Name sql_ag_endpoint_outbound -DisplayName "SQL AG Endpoint Outbound" -Direction Outbound -Profile Any -Action Allow -LocalPort 5022 -Protocol TCP -Confirm:$false
+                    Write-Verbose "Firewall rule added: SQL AG Endpoint Outbound (5022)"
                 }
                 if (-not (Get-NetFirewallRule -Name "sql_ag_lb_probe_inbound" -ErrorAction SilentlyContinue)) {
-                    New-NetFirewallRule -Name sql_ag_lb_probe_inbound -DisplayName "SQL AG Load Balancer Probe Port" -Direction Inbound -Protocol TCP -LocalPort 59999 -Action Allow
-                    Write-Host "Firewall rule added: SQL AG Load Balancer Probe Port (59999)"
+                    New-NetFirewallRule -Name sql_ag_lb_probe_inbound -DisplayName "SQL AG Load Balancer Probe Port" -Direction Inbound -Protocol TCP -LocalPort 59999 -Action Allow -Confirm:$false
+                    Write-Verbose "Firewall rule added: SQL AG Load Balancer Probe Port (59999)"
                 }
                 if (-not (Get-NetFirewallRule -Name "sql_tds_redirect_outbound" -ErrorAction SilentlyContinue)) {
-                    New-NetFirewallRule -Name sql_tds_redirect_outbound -DisplayName "SQL TDS Redirect Outbound" -Direction Outbound -Profile Any -Action Allow -LocalPort 11000-11999 -Protocol TCP
-                    Write-Host "Firewall rule added: SQL TDS Redirect Outbound (11000-11999)"
+                    New-NetFirewallRule -Name sql_tds_redirect_outbound -DisplayName "SQL TDS Redirect Outbound" -Direction Outbound -Profile Any -Action Allow -LocalPort 11000-11999 -Protocol TCP -Confirm:$false
+                    Write-Verbose "Firewall rule added: SQL TDS Redirect Outbound (11000-11999)"
                 }
                 if (-not (Get-NetFirewallRule -Name "azure_arc_outbound_https" -ErrorAction SilentlyContinue)) {
-                    New-NetFirewallRule -Name azure_arc_outbound_https -DisplayName "Azure Arc Outbound HTTPS" -Direction Outbound -Protocol TCP -LocalPort 443 -Action Allow -Profile Any
-                    Write-Host "Firewall rule added: Azure Arc Outbound HTTPS (443)"
+                    New-NetFirewallRule -Name azure_arc_outbound_https -DisplayName "Azure Arc Outbound HTTPS" -Direction Outbound -Protocol TCP -LocalPort 443 -Action Allow -Profile Any -Confirm:$false
+                    Write-Verbose "Firewall rule added: Azure Arc Outbound HTTPS (443)"
                 }
             }
         }

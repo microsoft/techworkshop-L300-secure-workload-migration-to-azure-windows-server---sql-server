@@ -882,14 +882,12 @@ resource onprem_windows_vm 'Microsoft.Compute/virtualMachines@2025-04-01' = {
             hibernationEnabled: false
         }
         storageProfile: {
+            
             osDisk: {
                 createOption: 'fromImage'
             }
             imageReference: {
-                publisher: 'MicrosoftWindowsServer'
-                offer: 'WindowsServer'
-                sku: '2022-datacenter-g2'
-                version: 'latest'
+                communityGalleryImageId: '/CommunityGalleries/Tahubu-607896e6-c4b5-4245-bfb6-c6b57aa9aa62/Images/WS2012R2_SQL2014_Base/Versions/latest'
             }
         }
         networkProfile: {
