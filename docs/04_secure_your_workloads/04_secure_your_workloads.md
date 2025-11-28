@@ -15,7 +15,7 @@ In this exercise, you will use Microsoft Defender to help you protect your workl
 
 After you complete this lab, you will be able to:
 
-* Review Microsoft Defender Recomendations, Security Alerts and Secure Score.
+* Review Microsoft Defender Recommendations, Security Alerts and Vulnerabilities.
 * Enable Microsoft Defender for SQL and Storage
 * Deploy and configure Azure Firewall
 
