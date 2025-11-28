@@ -1,4 +1,7 @@
-var resourceNameBase = 'tailspin${take(uniqueString(resourceGroup().id), 7)}'
+var prefix string = 'tailspin'
+var suffix = take(uniqueString(resourceGroup().id), 6)
+
+var resourceNameBase = '${prefix}${suffix}'
 
 @description('The Id of the Azure AD User.')
 param azureAdUserId string
@@ -45,6 +48,9 @@ param repositoryOwner string = 'Tahubu-AI'
 
 var location = resourceGroup().location
 
+@description('Restore the service instead of creating a new instance. This is useful if you previously soft-deleted the service and want to restore it. If you are restoring a service, set this to true. Otherwise, leave this as false.')
+param restore bool = false
+
 var hubNamePrefix = '${resourceNameBase}-hub'
 var spokeNamePrefix = '${resourceNameBase}-spoke'
 var sqlMiPrefix = '${resourceNameBase}-sqlmi'
@@ -53,6 +59,8 @@ var sqlMiStorageName = '${resourceNameBase}sqlmistor'
 var onPremPrefix = '${resourceNameBase}-onprem'
 var onPremSqlVmPrefix = '${onPremPrefix}-sql'
 var onPremWindowsVmPrefix = '${onPremPrefix}-win'
+
+var openAIName = '${resourceNameBase}-oai'
 
 var gitHubRepo = '${repositoryOwner}/${repositoryName}'
 var gitHubRepoScriptPath = 'Hands-on%20lab/resources/deployment/onprem'
@@ -247,6 +255,41 @@ resource onprem_spoke_vnet_peering 'Microsoft.Network/virtualNetworks/virtualNet
 }
 
 /* ****************************
+Azure OpenAI
+**************************** */
+@description('Creates an Azure OpenAI resource.')
+resource openAI 'Microsoft.CognitiveServices/accounts@2025-10-01-preview' = {
+  name: openAIName
+  location: location
+  kind: 'OpenAI'
+  sku: {
+    name: 'S0'
+    tier: 'Standard'
+  }
+  properties: {
+    customSubDomainName: openAIName
+    publicNetworkAccess: 'Enabled'
+    restore: restore
+  }
+}
+
+resource deployment 'Microsoft.CognitiveServices/accounts/deployments@2025-10-01-preview' = {
+  parent: openAI
+  name: 'text-embedding-ada-002'
+  sku: {
+    name: 'Standard'
+    capacity: 120
+  }
+  properties: {
+    model: {
+      format: 'OpenAI'
+      name: 'text-embedding-ada-002'
+      version: '2'
+    }
+  }
+}
+
+/* ****************************
 Azure SQL Managed Instance
 **************************** */
 resource sqlMi_storage 'Microsoft.Storage/storageAccounts@2025-06-01' = {
@@ -296,6 +339,7 @@ resource sqlMi 'Microsoft.Sql/managedInstances@2024-11-01-preview' = {
             tenantId: subscription().tenantId
             azureADOnlyAuthentication: false
         }
+        databaseFormat: 'AlwaysUpToDate'
     }
 }
 
@@ -838,14 +882,12 @@ resource onprem_windows_vm 'Microsoft.Compute/virtualMachines@2025-04-01' = {
             hibernationEnabled: false
         }
         storageProfile: {
+            
             osDisk: {
                 createOption: 'fromImage'
             }
             imageReference: {
-                publisher: 'MicrosoftWindowsServer'
-                offer: 'WindowsServer'
-                sku: '2022-datacenter-g2'
-                version: 'latest'
+                communityGalleryImageId: '/CommunityGalleries/Tahubu-607896e6-c4b5-4245-bfb6-c6b57aa9aa62/Images/WS2012R2_SQL2014_Base/Versions/latest'
             }
         }
         networkProfile: {
