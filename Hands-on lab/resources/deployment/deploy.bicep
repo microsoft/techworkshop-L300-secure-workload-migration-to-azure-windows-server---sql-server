@@ -330,6 +330,7 @@ resource sqlMi 'Microsoft.Sql/managedInstances@2024-11-01-preview' = {
         minimalTlsVersion: '1.2'
         requestedBackupStorageRedundancy: 'Geo'
         administratorLogin: labUsername
+        #disable-next-line use-secure-value-for-secure-inputs
         administratorLoginPassword: labSqlMiPassword
         administrators: {
             administratorType: 'ActiveDirectory'
