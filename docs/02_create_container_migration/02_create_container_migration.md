@@ -9,7 +9,7 @@ has_children: true
 
 ## Lab Scenario
 
-In this lab, you will perform steps toward migrating a sample TailSpin Toys containerized workloads to Azure Kubernetes Services (AKS) using using a sample Node.js application. TailSpin Toys needs to prepare its environment, migrate workloads, configure post-migration settings, and validate business outcomes.  
+In this lab, you will perform steps toward migrating a sample TailSpin Toys containerized workloads to Azure Kubernetes Services (AKS) using a sample Node.js application. TailSpin Toys needs to prepare its environment, migrate workloads, configure post-migration settings, and validate business outcomes.  
 
 ## Objectives
 
