@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aks-demo
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: aks-demo
+  template:
+    metadata:
+      labels:
+        app: aks-demo
+    spec:
+      containers:
+      - name: aks-demo
+        image: tailspinacr1000.azurecr.io/aks-demo:1.0
+        ports:
+        - containerPort: 3000
