@@ -77,10 +77,9 @@
     },
     "repositoryOwner": {
       "type": "string",
-      "defaultValue": "Tahubu-AI",
+      "defaultValue": "microsoft",
       "allowedValues": [
-        "microsoft",
-        "Tahubu-AI"
+        "microsoft"
       ],
       "metadata": {
         "description": "The owner of the GitHub repository containing deployment scripts."

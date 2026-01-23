@@ -42,9 +42,8 @@ param repositoryName string = 'microsoft-tw-l300-secure-workload-migration-to-az
 @description('The owner of the GitHub repository containing deployment scripts.')
 @allowed([
     'microsoft'
-    'Tahubu-AI'
 ])
-param repositoryOwner string = 'Tahubu-AI'
+param repositoryOwner string = 'microsoft'
 
 var location = resourceGroup().location
 
