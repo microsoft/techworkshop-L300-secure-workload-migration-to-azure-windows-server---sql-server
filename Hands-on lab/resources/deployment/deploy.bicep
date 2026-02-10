@@ -83,6 +83,7 @@ var labSqlMiPassword = 'demo!pass1234567'
 var tags = {
     purpose: 'tech-workshop'
     createdBy: azureAdUserLogin
+    SecurityControl: 'Ignore'
 }
 
 /* ****************************
