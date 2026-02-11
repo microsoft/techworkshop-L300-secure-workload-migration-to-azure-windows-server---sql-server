@@ -38,7 +38,7 @@ param sqlMiVCores int = 4
 @description('The branch of the GitHub repository to use for deployment scripts.')
 param repositoryBranch string = 'main'
 @description('The name of the GitHub repository containing deployment scripts.')
-param repositoryName string = 'microsoft-tw-l300-secure-workload-migration-to-azure-windows-sql-server'
+param repositoryName string = 'techworkshop-L300-secure-workload-migration-to-azure-windows-server---sql-server'
 @description('The owner of the GitHub repository containing deployment scripts.')
 @allowed([
     'microsoft'
