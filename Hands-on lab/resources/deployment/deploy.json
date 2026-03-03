@@ -5,8 +5,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.39.26.7824",
-      "templateHash": "8089549015204698057"
+      "version": "0.40.2.10011",
+      "templateHash": "13924493717907199515"
     }
   },
   "parameters": {
@@ -70,17 +70,16 @@
     },
     "repositoryName": {
       "type": "string",
-      "defaultValue": "microsoft-tw-l300-secure-workload-migration-to-azure-windows-sql-server",
+      "defaultValue": "techworkshop-L300-secure-workload-migration-to-azure-windows-server---sql-server",
       "metadata": {
         "description": "The name of the GitHub repository containing deployment scripts."
       }
     },
     "repositoryOwner": {
       "type": "string",
-      "defaultValue": "Tahubu-AI",
+      "defaultValue": "microsoft",
       "allowedValues": [
-        "microsoft",
-        "Tahubu-AI"
+        "microsoft"
       ],
       "metadata": {
         "description": "The owner of the GitHub repository containing deployment scripts."
@@ -123,7 +122,8 @@
     "labSqlMiPassword": "demo!pass1234567",
     "tags": {
       "purpose": "tech-workshop",
-      "createdBy": "[parameters('azureAdUserLogin')]"
+      "createdBy": "[parameters('azureAdUserLogin')]",
+      "SecurityControl": "Ignore"
     }
   },
   "resources": {

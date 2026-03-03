@@ -4,7 +4,7 @@ theme: just-the-docs
 
 aux_links:
   "TechWorkshop L300: Secure Workload Migration to Azure - Windows Server & SQL Server": 
-    - "https://github.com/Tahubu-AI/microsoft-tw-l300-secure-workload-migration-to-azure-windows-sql-server"
+    - "https://github.com/microsoft/techworkshop-L300-secure-workload-migration-to-azure-windows-server---sql-server"
 callouts_level: quiet # or loud
 callouts:
   highlight:

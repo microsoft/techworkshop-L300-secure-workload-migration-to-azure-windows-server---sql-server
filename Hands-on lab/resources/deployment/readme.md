@@ -4,8 +4,8 @@ This folder contains the setup deployment scripts for creating the required Azur
 
 Select the appropriate "Deploy" button below to provision the simulated on-premises Tailspin Toys resources for the lab into your Azure Subscription:
 
-[![Deploy To Azure](../../images/deploytoazure.svg)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FTahubu-AI%2Fmicrosoft-tw-l300-secure-workload-migration-to-azure-windows-sql-server%2Fmain%2FHands-on%2520lab%2Fresources%2Fdeployment%2Fdeploy.json)
-[![Deploy To Azure US Gov](../../images/deploytoazuregov.svg)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FTahubu-AI%2Fmicrosoft-tw-l300-secure-workload-migration-to-azure-windows-sql-server%2Fmain%2FHands-on%2520lab%2Fresources%2Fdeployment%2Fdeploy.json)
+[![Deploy To Azure](../../images/deploytoazure.svg)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmicrosoft%2Ftechworkshop-L300-secure-workload-migration-to-azure-windows-server---sql-server%2Fmain%2FHands-on%2520lab%2Fresources%2Fdeployment%2Fdeploy.json)
+[![Deploy To Azure US Gov](../../images/deploytoazuregov.svg)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmicrosoft%2Ftechworkshop-L300-secure-workload-migration-to-azure-windows-server---sql-server%2Fmain%2FHands-on%2520lab%2Fresources%2Fdeployment%2Fdeploy.json)
 
 The ARM template will deploy the following resources:
 
