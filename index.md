@@ -47,21 +47,17 @@ Tailspin already has a Hub and Spoke network setup in Azure with Azure Bastion f
 - Azure Automation (optional)
 - Azure Log Analytics (optional)
 
-**TODO: UPDATE SECTION BELOW WITH LAB-SPECIFIC ARCHITECTURE DETAILS**
-
 ---
 
 ## Solution architecture
 
 ![Diagram showing on-premises network connected to Azure using Azure ExpressRoute with a Hub and Spoke network in Azure. The Spoke VNet contains the migrated Front-end, Back-end, and SQL Database workloads running within Subnets inside the Spoke VNet in Azure.](Hands-on%20lab/images/PreferredSolutionDiagram.png "Preferred Solution Diagram")
 
-The diagram shows an on-premises network connected to Azure using Azure ExpressRoute with a Hub and Spoke network in Azure. The Spoke VNet contains the migrated Front-end, Back-end, and SQL Database workloads running within Subnets inside the Spoke VNet in Azure.
+The diagram shows an on-premises network connected to Azure using Azure ExpressRoute with a Hub and Spoke network in Azure. Within Azure, the Spoke VNet is used to run the migrated front-end, back-end, and SQL database workloads, each isolated in its own subnet.
 
 ### Redundant Azure ExpressRoute peering locations
 
-Redundant Azure ExpressRoute peering locations provide an additional layer of resiliency and high availability for your connectivity to Azure. With redundant peering locations, you can establish ExpressRoute circuits in two different peering locations, providing a backup connection in case of an outage or disruption in one of the locations.
-
-This redundancy ensures that your connectivity to Azure remains uninterrupted, even in the event of a failure in one of the peering locations. By leveraging redundant peering locations, you can minimize downtime and ensure that your workloads and applications continue to run smoothly, even in the face of unexpected disruptions.
+Redundant Azure ExpressRoute peering locations provide an additional layer of resiliency and high availability for your connectivity to Azure. By establishing ExpressRoute circuits in two different peering locations, you gain built‑in redundancy that provides a backup connection if one location experiences an outage. This design minimizes downtime and helps ensure uninterrupted connectivity to Azure for your workloads and applications.
 
 {: .note }
 > You can find more information about Redundant Azure ExpressRoute peering locations at [https://learn.microsoft.com/en-us/azure/expressroute/designing-for-disaster-recovery-with-expressroute-privatepeering](https://learn.microsoft.com/en-us/azure/expressroute/designing-for-disaster-recovery-with-expressroute-privatepeering) and [https://azure.microsoft.com/en-us/blog/building-resilient-expressroute-connectivity-for-business-continuity-and-disaster-recovery-2/](https://azure.microsoft.com/en-us/blog/building-resilient-expressroute-connectivity-for-business-continuity-and-disaster-recovery-2/).
@@ -75,7 +71,6 @@ To set up a S2S VPN connection as a backup for ExpressRoute private peering, you
 {: .note }
 > You can find more information about Redundant Azure ExpressRoute peering locations at [https://learn.microsoft.com/en-us/azure/expressroute/use-s2s-vpn-as-backup-for-expressroute-privatepeering](https://learn.microsoft.com/en-us/azure/expressroute/use-s2s-vpn-as-backup-for-expressroute-privatepeering)
 
-
 ### ExpressRoute Gateway SKU Zone redundancy
 
 Azure zone-aware SKUs provide high availability and resiliency for your workloads and applications by distributing resources across multiple availability zones within an Azure region. Each availability zone is a separate physical location with independent power, cooling, and networking, providing protection against datacenter-level failures.
@@ -87,19 +82,17 @@ By using zone-aware SKUs, you can deploy your resources, such as virtual machine
 
 ---
 
-**END OF TODO SECTION**
-
 ## Exercises
 
 This lab has exercises on:
 
-- Provisioning a Windows Server VM
-- Set up a Windows Server for application migration to Azure
-- Migrate an on-premises SQL Server Database to Azure SQL Managed Instance (SQL MI)
-- Secure Windows Server
-- Enable Azure Arc on an on-premises virtual machine so it can be managed from Azure
+- Provision a Windows Server virtual machine (VM)
+- Configure a Windows Server VM for application migration to Azure
+- Migrate an on-premises SQL Server database to Azure SQL Managed Instance (SQL MI)
+- Secure the Windows Server VM
+- Enable Azure Arc on an on-premises virtual machine for centralized management in Azure
 
-This lab is available as GitHub pages [here](TODO: INSERT LINK WHEN PUBLISHED).
+This lab is available as GitHub pages [here](https://microsoft.github.io/techworkshop-L300-secure-workload-migration-to-azure-windows-server---sql-server/).
 
 ## Prerequisites
 
