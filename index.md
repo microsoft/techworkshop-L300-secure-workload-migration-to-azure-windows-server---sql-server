@@ -59,8 +59,7 @@ The diagram shows an on-premises network connected to Azure using Azure ExpressR
 
 Redundant Azure ExpressRoute peering locations provide an additional layer of resiliency and high availability for your connectivity to Azure. By establishing ExpressRoute circuits in two different peering locations, you gain built‑in redundancy that provides a backup connection if one location experiences an outage. This design minimizes downtime and helps ensure uninterrupted connectivity to Azure for your workloads and applications.
 
-{: .note }
-> You can find more information about Redundant Azure ExpressRoute peering locations at [https://learn.microsoft.com/en-us/azure/expressroute/designing-for-disaster-recovery-with-expressroute-privatepeering](https://learn.microsoft.com/en-us/azure/expressroute/designing-for-disaster-recovery-with-expressroute-privatepeering) and [https://azure.microsoft.com/en-us/blog/building-resilient-expressroute-connectivity-for-business-continuity-and-disaster-recovery-2/](https://azure.microsoft.com/en-us/blog/building-resilient-expressroute-connectivity-for-business-continuity-and-disaster-recovery-2/).
+> **NOTE**: You can find more information about Redundant Azure ExpressRoute peering locations at [https://learn.microsoft.com/en-us/azure/expressroute/designing-for-disaster-recovery-with-expressroute-privatepeering](https://learn.microsoft.com/en-us/azure/expressroute/designing-for-disaster-recovery-with-expressroute-privatepeering) and [https://azure.microsoft.com/en-us/blog/building-resilient-expressroute-connectivity-for-business-continuity-and-disaster-recovery-2/](https://azure.microsoft.com/en-us/blog/building-resilient-expressroute-connectivity-for-business-continuity-and-disaster-recovery-2/).
 
 ### S2S VPN as a backup for ExpressRoute private peering
 
@@ -68,8 +67,7 @@ A Site-to-Site (S2S) VPN connection can be used as a secure failover path for Ex
 
 To set up a S2S VPN connection as a backup for ExpressRoute private peering, you need to create two virtual network gateways for the same virtual network: one using the gateway type 'VPN' and the other using the gateway type 'ExpressRoute'. Once the S2S VPN connection is configured, it can provide a secure and reliable failover path for ExpressRoute private peering, ensuring that your connectivity to Azure remains uninterrupted even in the event of an outage or disruption in the ExpressRoute connection. 
 
-{: .note }
-> You can find more information about Redundant Azure ExpressRoute peering locations at [https://learn.microsoft.com/en-us/azure/expressroute/use-s2s-vpn-as-backup-for-expressroute-privatepeering](https://learn.microsoft.com/en-us/azure/expressroute/use-s2s-vpn-as-backup-for-expressroute-privatepeering)
+> **NOTE**: You can find more information about Redundant Azure ExpressRoute peering locations at [https://learn.microsoft.com/en-us/azure/expressroute/use-s2s-vpn-as-backup-for-expressroute-privatepeering](https://learn.microsoft.com/en-us/azure/expressroute/use-s2s-vpn-as-backup-for-expressroute-privatepeering)
 
 ### ExpressRoute Gateway SKU Zone redundancy
 
@@ -77,8 +75,7 @@ Azure zone-aware SKUs provide high availability and resiliency for your workload
 
 By using zone-aware SKUs, you can deploy your resources, such as virtual machines, managed disks, and load balancers, across multiple availability zones, ensuring that your workloads and applications remain available even if one of the zones experiences an outage. This redundancy helps to minimize downtime and ensure that your services continue to run smoothly, even in the face of unexpected disruptions.
 
-{: .note }
-> You can find more information about Azure Availability Zones at [https://learn.microsoft.com/en-us/azure/reliability/availability-zones-overview?tabs=azure-cli](https://learn.microsoft.com/en-us/azure/reliability/availability-zones-overview?tabs=azure-cli).
+> **NOTE**: You can find more information about Azure Availability Zones at [https://learn.microsoft.com/en-us/azure/reliability/availability-zones-overview?tabs=azure-cli](https://learn.microsoft.com/en-us/azure/reliability/availability-zones-overview?tabs=azure-cli).
 
 ---
 
