@@ -8,17 +8,7 @@ param azureAdUserId string
 @description('The Login of the Azure AD User (ex: username@domain.onmicrosoft.com).')
 param azureAdUserLogin string
 
-@description('The VM size for the virtual machines. Allows Intel and AMD 4-core options with premium and non-premium storage.')
-@allowed([
-    'Standard_D4s_v4' // Default value
-    'Standard_D4s_v5'
-    'Standard_D4as_v5' // AMD-based, 4 vCPUs, premium storage
-    'Standard_D4_v5' // Intel-based, 4 vCPUs, non-premium storage
-    'Standard_D4a_v4' // AMD-based, 4 vCPUs, non-premium storage
-    'Standard_D4d_v5' // Intel-based, 4 vCPUs, premium storage
-    'Standard_D4ds_v5' // Intel-based, 4 vCPUs, premium storage
-    'Standard_D4as_v4' // AMD-based, 4 vCPUs, non-premium storage
-])
+@description('The VM size for the virtual machines.')
 param onpremVMSize string = 'Standard_D4s_v4'
 
 @description('The SKU of the SQL Managed Instance.')
@@ -57,7 +47,6 @@ var sqlMiStorageName = '${resourceNameBase}sqlmistor'
 
 var onPremPrefix = '${resourceNameBase}-onprem'
 var onPremSqlVmPrefix = '${onPremPrefix}-sql'
-var onPremWindowsVmPrefix = '${onPremPrefix}-win'
 
 var openAIName = '${resourceNameBase}-oai'
 
@@ -71,10 +60,6 @@ var databaseBackupFileUrl = '${gitHubRepoUrl}/${databaseBackupFile}'
 var sqlVmScriptName = 'sql-vm-config.ps1'
 var sqlVmScriptArchive = 'sql-vm-config.zip'
 var sqlVmScriptArchiveUrl = '${gitHubRepoUrl}/${sqlVmScriptArchive}'
-
-var windowsVmScriptName = 'windows-vm-config.ps1'
-var windowsVmScriptArchive = 'windows-vm-config.zip'
-var windowsVmScriptArchiveUrl = '${gitHubRepoUrl}/${windowsVmScriptArchive}'
 
 var labUsername = 'demouser'
 var labPassword = 'demo!pass123'
@@ -865,86 +850,6 @@ resource bastion_public_ip 'Microsoft.Network/publicIPAddresses@2025-01-01' = {
     properties: {
         publicIPAddressVersion: 'IPv4'
         publicIPAllocationMethod: 'Static'
-    }
-}
-
-/* ****************************
-On-premises Windows VM
-**************************** */
-resource onprem_windows_vm 'Microsoft.Compute/virtualMachines@2025-04-01' = {
-    name: '${onPremWindowsVmPrefix}-vm'
-    location: location
-    tags: tags
-    properties: {
-        hardwareProfile: {
-            vmSize: onpremVMSize
-        }
-        additionalCapabilities: {
-            hibernationEnabled: false
-        }
-        storageProfile: {
-            
-            osDisk: {
-                createOption: 'fromImage'
-            }
-            imageReference: {
-                communityGalleryImageId: '/CommunityGalleries/Tahubu-607896e6-c4b5-4245-bfb6-c6b57aa9aa62/Images/WS2012R2_SQL2014_Base/Versions/latest'
-            }
-        }
-        networkProfile: {
-            networkInterfaces: [
-                {
-                    id: onprem_windows_nic.id
-                }
-            ]
-        }
-        osProfile: {
-            computerName: 'WinServer'
-            #disable-next-line adminusername-should-not-be-literal
-            adminUsername: labUsername
-            #disable-next-line use-secure-value-for-secure-inputs
-            adminPassword: labPassword
-        }
-    }
-}
-
-resource onprem_windows_nic 'Microsoft.Network/networkInterfaces@2025-01-01' = {
-    name: '${onPremWindowsVmPrefix}-nic'
-    location: location
-    tags: tags
-    properties: {
-        ipConfigurations: [
-            {
-                name: 'ipconfig1'
-                properties: {
-                    subnet: {
-                        id: onprem_subnet.id
-                    }
-                    privateIPAllocationMethod: 'Dynamic'
-                }
-            }
-        ]
-    }
-}
-
-resource onprem_windows_vm_ext 'Microsoft.Compute/virtualMachines/extensions@2025-04-01' = {
-    parent: onprem_windows_vm
-    name: 'WindowsVmConfig'
-    location: location
-    tags: tags
-    properties: {
-        publisher: 'Microsoft.Powershell'
-        type: 'DSC'
-        typeHandlerVersion: '2.9'
-        autoUpgradeMinorVersion: true
-        settings: {
-            wmfVersion: 'latest'
-            configuration: {
-                url: windowsVmScriptArchiveUrl
-                script: windowsVmScriptName
-                function: 'ArcConnect'
-            }
-        }
     }
 }
 

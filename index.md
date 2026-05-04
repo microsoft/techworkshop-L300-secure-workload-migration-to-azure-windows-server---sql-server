@@ -24,17 +24,14 @@ Tailspin already has a Hub and Spoke network setup in Azure with Azure Bastion f
 - SQL Server
 - Azure SQL (SQL Server on Azure VMs, Azure SQL Managed Instance, Azure SQL Database)
 - Azure Security
-- AVS Azure Virtual Machines
 - Azure Arc
 - Azure Active Directory (Entra ID)
-- Azure Migrate
 
 ## Additional technologies
 
 - Microsoft Defender
 - Network Security (include Azure DDoS Protection)
 - Azure Automanage
-- Azure VMware Solution
 - Azure Virtual Desktop
 - Azure Disk Storage
 - Azure Files
@@ -59,15 +56,15 @@ The diagram shows an on-premises network connected to Azure using Azure ExpressR
 
 Redundant Azure ExpressRoute peering locations provide an additional layer of resiliency and high availability for your connectivity to Azure. By establishing ExpressRoute circuits in two different peering locations, you gain built‑in redundancy that provides a backup connection if one location experiences an outage. This design minimizes downtime and helps ensure uninterrupted connectivity to Azure for your workloads and applications.
 
-> **NOTE**: You can find more information about Redundant Azure ExpressRoute peering locations at [https://learn.microsoft.com/en-us/azure/expressroute/designing-for-disaster-recovery-with-expressroute-privatepeering](https://learn.microsoft.com/en-us/azure/expressroute/designing-for-disaster-recovery-with-expressroute-privatepeering) and [https://azure.microsoft.com/en-us/blog/building-resilient-expressroute-connectivity-for-business-continuity-and-disaster-recovery-2/](https://azure.microsoft.com/en-us/blog/building-resilient-expressroute-connectivity-for-business-continuity-and-disaster-recovery-2/).
+> **NOTE**: You can find more information about Redundant Azure ExpressRoute peering locations at [Designing for Disaster Recovery with ExpressRoute private peering](https://learn.microsoft.com/en-us/azure/expressroute/designing-for-disaster-recovery-with-expressroute-privatepeering) and [Building resilient ExpressRoute connectivity for business continuity and disaster recovery](https://azure.microsoft.com/en-us/blog/building-resilient-expressroute-connectivity-for-business-continuity-and-disaster-recovery-2/).
 
 ### S2S VPN as a backup for ExpressRoute private peering
 
 A Site-to-Site (S2S) VPN connection can be used as a secure failover path for ExpressRoute private peering. This means that if the ExpressRoute connection experiences an outage or disruption, the S2S VPN connection can provide a backup connection to ensure continued connectivity to Azure.
 
-To set up a S2S VPN connection as a backup for ExpressRoute private peering, you need to create two virtual network gateways for the same virtual network: one using the gateway type 'VPN' and the other using the gateway type 'ExpressRoute'. Once the S2S VPN connection is configured, it can provide a secure and reliable failover path for ExpressRoute private peering, ensuring that your connectivity to Azure remains uninterrupted even in the event of an outage or disruption in the ExpressRoute connection. 
+To set up a S2S VPN connection as a backup for ExpressRoute private peering, you need to create two virtual network gateways for the same virtual network: one using the gateway type 'VPN' and the other using the gateway type 'ExpressRoute'. Once the S2S VPN connection is configured, it can provide a secure and reliable failover path for ExpressRoute private peering, ensuring that your connectivity to Azure remains uninterrupted even in the event of an outage or disruption in the ExpressRoute connection.
 
-> **NOTE**: You can find more information about Redundant Azure ExpressRoute peering locations at [https://learn.microsoft.com/en-us/azure/expressroute/use-s2s-vpn-as-backup-for-expressroute-privatepeering](https://learn.microsoft.com/en-us/azure/expressroute/use-s2s-vpn-as-backup-for-expressroute-privatepeering)
+> **NOTE**: You can find more information about Redundant Azure ExpressRoute peering locations at [Use S2S VPN as backup for ExpressRoute private peering](https://learn.microsoft.com/en-us/azure/expressroute/use-s2s-vpn-as-backup-for-expressroute-privatepeering)
 
 ### ExpressRoute Gateway SKU Zone redundancy
 
@@ -83,13 +80,12 @@ By using zone-aware SKUs, you can deploy your resources, such as virtual machine
 
 This lab has exercises on:
 
-- Provision a Windows Server virtual machine (VM)
-- Configure a Windows Server VM for application migration to Azure
+- Provision a simulated on-presmises environment in your Azure subscription
+- Arc-enable a Windows Server VM for application migration to Azure
 - Migrate an on-premises SQL Server database to Azure SQL Managed Instance (SQL MI)
-- Secure the Windows Server VM
-- Enable Azure Arc on an on-premises virtual machine for centralized management in Azure
+- Secure the SQL MI
 
-This lab is available as GitHub pages [here](https://microsoft.github.io/techworkshop-L300-secure-workload-migration-to-azure-windows-server---sql-server/).
+This lab is available as [GitHub pages](https://microsoft.github.io/techworkshop-L300-secure-workload-migration-to-azure-windows-server---sql-server/).
 
 ## Prerequisites
 

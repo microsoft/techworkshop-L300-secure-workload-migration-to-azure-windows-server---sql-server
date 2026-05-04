@@ -5,8 +5,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.40.2.10011",
-      "templateHash": "13924493717907199515"
+      "version": "0.42.1.51946",
+      "templateHash": "14463131955365912755"
     }
   },
   "parameters": {
@@ -25,18 +25,8 @@
     "onpremVMSize": {
       "type": "string",
       "defaultValue": "Standard_D4s_v4",
-      "allowedValues": [
-        "Standard_D4s_v4",
-        "Standard_D4s_v5",
-        "Standard_D4as_v5",
-        "Standard_D4_v5",
-        "Standard_D4a_v4",
-        "Standard_D4d_v5",
-        "Standard_D4ds_v5",
-        "Standard_D4as_v4"
-      ],
       "metadata": {
-        "description": "The VM size for the virtual machines. Allows Intel and AMD 4-core options with premium and non-premium storage."
+        "description": "The VM size for the virtual machines."
       }
     },
     "sqlMiSku": {
@@ -104,7 +94,6 @@
     "sqlMiStorageName": "[format('{0}sqlmistor', variables('resourceNameBase'))]",
     "onPremPrefix": "[format('{0}-onprem', variables('resourceNameBase'))]",
     "onPremSqlVmPrefix": "[format('{0}-sql', variables('onPremPrefix'))]",
-    "onPremWindowsVmPrefix": "[format('{0}-win', variables('onPremPrefix'))]",
     "openAIName": "[format('{0}-oai', variables('resourceNameBase'))]",
     "gitHubRepo": "[format('{0}/{1}', parameters('repositoryOwner'), parameters('repositoryName'))]",
     "gitHubRepoScriptPath": "Hands-on%20lab/resources/deployment/onprem",
@@ -114,9 +103,6 @@
     "sqlVmScriptName": "sql-vm-config.ps1",
     "sqlVmScriptArchive": "sql-vm-config.zip",
     "sqlVmScriptArchiveUrl": "[format('{0}/{1}', variables('gitHubRepoUrl'), variables('sqlVmScriptArchive'))]",
-    "windowsVmScriptName": "windows-vm-config.ps1",
-    "windowsVmScriptArchive": "windows-vm-config.zip",
-    "windowsVmScriptArchiveUrl": "[format('{0}/{1}', variables('gitHubRepoUrl'), variables('windowsVmScriptArchive'))]",
     "labUsername": "demouser",
     "labPassword": "demo!pass123",
     "labSqlMiPassword": "demo!pass1234567",
@@ -946,91 +932,6 @@
         "publicIPAddressVersion": "IPv4",
         "publicIPAllocationMethod": "Static"
       }
-    },
-    "onprem_windows_vm": {
-      "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2025-04-01",
-      "name": "[format('{0}-vm', variables('onPremWindowsVmPrefix'))]",
-      "location": "[variables('location')]",
-      "tags": "[variables('tags')]",
-      "properties": {
-        "hardwareProfile": {
-          "vmSize": "[parameters('onpremVMSize')]"
-        },
-        "additionalCapabilities": {
-          "hibernationEnabled": false
-        },
-        "storageProfile": {
-          "osDisk": {
-            "createOption": "fromImage"
-          },
-          "imageReference": {
-            "communityGalleryImageId": "/CommunityGalleries/Tahubu-607896e6-c4b5-4245-bfb6-c6b57aa9aa62/Images/WS2012R2_SQL2014_Base/Versions/latest"
-          }
-        },
-        "networkProfile": {
-          "networkInterfaces": [
-            {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-nic', variables('onPremWindowsVmPrefix')))]"
-            }
-          ]
-        },
-        "osProfile": {
-          "computerName": "WinServer",
-          "adminUsername": "[variables('labUsername')]",
-          "adminPassword": "[variables('labPassword')]"
-        }
-      },
-      "dependsOn": [
-        "onprem_windows_nic"
-      ]
-    },
-    "onprem_windows_nic": {
-      "type": "Microsoft.Network/networkInterfaces",
-      "apiVersion": "2025-01-01",
-      "name": "[format('{0}-nic', variables('onPremWindowsVmPrefix'))]",
-      "location": "[variables('location')]",
-      "tags": "[variables('tags')]",
-      "properties": {
-        "ipConfigurations": [
-          {
-            "name": "ipconfig1",
-            "properties": {
-              "subnet": {
-                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('{0}-vnet', variables('onPremPrefix')), 'default')]"
-              },
-              "privateIPAllocationMethod": "Dynamic"
-            }
-          }
-        ]
-      },
-      "dependsOn": [
-        "onprem_subnet"
-      ]
-    },
-    "onprem_windows_vm_ext": {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "apiVersion": "2025-04-01",
-      "name": "[format('{0}/{1}', format('{0}-vm', variables('onPremWindowsVmPrefix')), 'WindowsVmConfig')]",
-      "location": "[variables('location')]",
-      "tags": "[variables('tags')]",
-      "properties": {
-        "publisher": "Microsoft.Powershell",
-        "type": "DSC",
-        "typeHandlerVersion": "2.9",
-        "autoUpgradeMinorVersion": true,
-        "settings": {
-          "wmfVersion": "latest",
-          "configuration": {
-            "url": "[variables('windowsVmScriptArchiveUrl')]",
-            "script": "[variables('windowsVmScriptName')]",
-            "function": "ArcConnect"
-          }
-        }
-      },
-      "dependsOn": [
-        "onprem_windows_vm"
-      ]
     },
     "onprem_sql_vm": {
       "type": "Microsoft.Compute/virtualMachines",
