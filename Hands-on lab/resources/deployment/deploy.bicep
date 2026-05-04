@@ -1,4 +1,4 @@
-var prefix string = 'tailspin'
+var prefix = 'tailspin'
 var suffix = take(uniqueString(resourceGroup().id), 6)
 
 var resourceNameBase = '${prefix}${suffix}'
@@ -35,6 +35,19 @@ param sqlMiSku string = 'GP_Gen5'
 ])
 param sqlMiVCores int = 4
 
+@description('Use Microsoft Entra-only authentication for SQL Managed Instance. Set to false to enable SQL authentication.')
+param useEntraOnlyAuthentication bool = true
+
+@description('SQL admin login for SQL Managed Instance. Used only when Entra-only authentication is disabled.')
+param sqlMiAdminLogin string = 'demouser'
+
+@description('SQL admin password for SQL Managed Instance. Used only when Entra-only authentication is disabled.')
+@secure()
+param sqlMiAdminPassword string = ''
+
+@description('Create SQL Managed Instance Contributor role assignment for the deployment user.')
+param createSqlMiRoleAssignment bool = false
+
 @description('The branch of the GitHub repository to use for deployment scripts.')
 param repositoryBranch string = 'main'
 @description('The name of the GitHub repository containing deployment scripts.')
@@ -59,7 +72,7 @@ var onPremPrefix = '${resourceNameBase}-onprem'
 var onPremSqlVmPrefix = '${onPremPrefix}-sql'
 var onPremWindowsVmPrefix = '${onPremPrefix}-win'
 
-var openAIName = '${resourceNameBase}-oai'
+var openAIName = '${resourceNameBase}-oai-${take(uniqueString(azureAdUserId), 4)}'
 
 var gitHubRepo = '${repositoryOwner}/${repositoryName}'
 var gitHubRepoScriptPath = 'Hands-on%20lab/resources/deployment/onprem'
@@ -78,7 +91,13 @@ var windowsVmScriptArchiveUrl = '${gitHubRepoUrl}/${windowsVmScriptArchive}'
 
 var labUsername = 'demouser'
 var labPassword = 'demo!pass123'
-var labSqlMiPassword = 'demo!pass1234567'
+
+var sqlMiSqlAuthProperties = useEntraOnlyAuthentication
+    ? {}
+    : {
+            administratorLogin: sqlMiAdminLogin
+            administratorLoginPassword: sqlMiAdminPassword
+        }
 
 var tags = {
     purpose: 'tech-workshop'
@@ -321,31 +340,28 @@ resource sqlMi 'Microsoft.Sql/managedInstances@2024-11-01-preview' = {
     identity: {
         type: 'SystemAssigned'
     }
-    properties: {
-        subnetId: '${spoke_vnet.id}/subnets/AzureSqlMI'
-        storageSizeInGB: 64
-        vCores: sqlMiVCores
-        licenseType: 'LicenseIncluded'
-        zoneRedundant: false
-        minimalTlsVersion: '1.2'
-        requestedBackupStorageRedundancy: 'Geo'
-        administratorLogin: labUsername
-        #disable-next-line use-secure-value-for-secure-inputs
-        administratorLoginPassword: labSqlMiPassword
-        administrators: {
-            administratorType: 'ActiveDirectory'
-            principalType: 'User'
-            login: azureAdUserLogin
-            sid: azureAdUserId
-            tenantId: subscription().tenantId
-            azureADOnlyAuthentication: false
-        }
-        databaseFormat: 'AlwaysUpToDate'
-    }
+        properties: union({
+            subnetId: '${spoke_vnet.id}/subnets/AzureSqlMI'
+            storageSizeInGB: 64
+            vCores: sqlMiVCores
+            licenseType: 'LicenseIncluded'
+            zoneRedundant: false
+            minimalTlsVersion: '1.2'
+            requestedBackupStorageRedundancy: 'Geo'
+            administrators: {
+                administratorType: 'ActiveDirectory'
+                principalType: 'User'
+                login: azureAdUserLogin
+                sid: azureAdUserId
+                tenantId: subscription().tenantId
+                azureADOnlyAuthentication: useEntraOnlyAuthentication
+            }
+            databaseFormat: 'AlwaysUpToDate'
+        }, sqlMiSqlAuthProperties)
 }
 
-// Assign the "Azure Connected Machine Onboarding" role to the identity fo the deployment user
-resource sqlMiRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+// Optionally assign SQL Managed Instance Contributor role to the deployment user.
+resource sqlMiRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (createSqlMiRoleAssignment) {
   name: guid(resourceGroup().name, azureAdUserId, 'SqlMiContributorRole')
   properties: {
     roleDefinitionId: subscriptionResourceId(

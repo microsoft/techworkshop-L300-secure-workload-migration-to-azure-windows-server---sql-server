@@ -22,3 +22,9 @@ After you complete this lab, you will be able to:
 ## Lab Duration
 
 * **Estimated Time:** 45 minutes
+
+## Day 2 Reminder
+
+The SQL Managed Instance state check is now part of the **Pre-Lab Readiness Check** in Exercise 03.
+
+If that check was skipped and SQL MI appears unavailable in Exercise 04, verify it is running and start it before proceeding.
