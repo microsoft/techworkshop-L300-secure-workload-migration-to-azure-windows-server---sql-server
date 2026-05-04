@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.42.1.51946",
-      "templateHash": "14463131955365912755"
+      "templateHash": "16418209914518094678"
     }
   },
   "parameters": {
@@ -121,7 +121,6 @@
     "sqlMiStorageName": "[format('{0}sqlmistor', variables('resourceNameBase'))]",
     "onPremPrefix": "[format('{0}-onprem', variables('resourceNameBase'))]",
     "onPremSqlVmPrefix": "[format('{0}-sql', variables('onPremPrefix'))]",
-    "onPremWindowsVmPrefix": "[format('{0}-win', variables('onPremPrefix'))]",
     "openAIName": "[format('{0}-oai-{1}', variables('resourceNameBase'), take(uniqueString(parameters('azureAdUserId')), 4))]",
     "gitHubRepo": "[format('{0}/{1}', parameters('repositoryOwner'), parameters('repositoryName'))]",
     "gitHubRepoScriptPath": "Hands-on%20lab/resources/deployment/onprem",
@@ -943,7 +942,7 @@
         "publicIPAllocationMethod": "Static"
       }
     },
-    "onprem_sql_vm": {
+    {
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2025-04-01",
       "name": "[format('{0}-vm', variables('onPremSqlVmPrefix'))]",
