@@ -21,4 +21,32 @@ After you complete this lab, you will be able to:
 ## Lab Duration
 
 - **Estimated Time:** 45 minutes
+
+## Pre-Exercise 04 Readiness Check
+
+Before starting Exercise 03, verify that Azure SQL Managed Instance is running.
+
+In some lab environments, SQL Managed Instance may be stopped between sessions, and starting it can take 15-30 minutes. Running this check now prevents delays at the start of Exercise 04.
+
+In VS Code terminal, run:
+
+```powershell
+az sql mi show --resource-group <resource-group-name> --name <sql-mi-name> --query "{state:state, provisioningState:provisioningState}" -o json
+```
+
+If the state is `Stopped`, start it now:
+
+```powershell
+az sql mi start --resource-group <resource-group-name> --name <sql-mi-name>
+```
+
+You can also do this in the Azure portal.  Follow the instructions below:
+
+Open Azure portal.
+Go to Resource groups and open your lab resource group.
+Select your SQL managed instance resource.
+Check the Status or State value.
+If state is Ready, continue with Exercise 04.
+If state is Stopped, select Start.
+Wait until state changes to Ready, then continue Exercise 04.
   
