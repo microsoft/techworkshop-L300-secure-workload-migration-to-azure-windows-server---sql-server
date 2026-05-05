@@ -11,7 +11,7 @@ has_children: true
 
 For this exercise, you will use a preprovisioned environment to navigate through the tasks and steps. You will **NOT** use your own subscription.
 
-Your coach will provide you with a link to the Skillable environment and a registration key.
+Your coach will provide you with a link to the environment and a registration key.
 
 In the provided environment, you will use an i-SIM to click through the steps associated with Azure Arc-enabling a Windows Server VM that Tailspin has on-premises. This VM is being Arc-enabled since there are no plans to migrate it to Azure, but Tailspin would like to simplify the management of all their VMs in a single place. Azure Arc provides the functionality to manage Azure and on-premises VMs in a single place giving Tailspin Toys exactly what they are looking for to simplify VM management and administration.
 
