@@ -34,13 +34,13 @@ Before starting Exercise 03, verify that Azure SQL Managed Instance is running.
 
 2. From a VS Code terminal, run:
 
-    ```powershell
+    ```bash
     az sql mi show --resource-group <resource-group-name> --name <sql-mi-name> --query "{state:state, provisioningState:provisioningState}" -o json
     ```
 
 3. If the state is `Stopped`, start it now:
 
-    ```powershell
+    ```bash
     az sql mi start --resource-group <resource-group-name> --name <sql-mi-name>
     ```
 
